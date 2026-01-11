@@ -1,0 +1,45 @@
+{
+  "version": "1.0.0",
+  "max_concurrent_agents": 5,
+  "agents": {
+    "architect-001": {
+      "agent_id": "architect-001",
+      "role": "architect",
+      "capabilities": [
+        "system-design",
+        "documentation"
+      ],
+      "status": "active",
+      "current_task": null,
+      "registered_at": "2026-01-11T20:37:27.580726",
+      "last_heartbeat": null
+    },
+    "backend-001": {
+      "agent_id": "backend-001",
+      "role": "backend",
+      "capabilities": [
+        "python",
+        "fastapi",
+        "postgresql"
+      ],
+      "status": "active",
+      "current_task": null,
+      "registered_at": "2026-01-11T20:37:27.580726",
+      "last_heartbeat": null
+    },
+    "frontend-001": {
+      "agent_id": "frontend-001",
+      "role": "frontend",
+      "capabilities": [
+        "react",
+        "typescript",
+        "css"
+      ],
+      "status": "active",
+      "current_task": null,
+      "registered_at": "2026-01-11T20:37:27.580726",
+      "last_heartbeat": null
+    }
+  },
+  "last_updated": "2026-01-11T20:37:27.580726"
+}

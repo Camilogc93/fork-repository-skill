@@ -8,10 +8,13 @@ Provides a real-time view of agent activity, task progress, and system status.
 import os
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 from orchestrator import TaskManager, AgentRegistry, TaskStatus
 from health_monitor import HealthMonitor
+from message_bus import MessageBus
+from checkpoint_manager import CheckpointManager
 
 
 class Dashboard:
@@ -28,6 +31,8 @@ class Dashboard:
         self.task_mgr = TaskManager(comm_dir)
         self.agent_registry = AgentRegistry(comm_dir)
         self.health_monitor = HealthMonitor(comm_dir)
+        self.message_bus = MessageBus(comm_dir)
+        self.checkpoint_mgr = CheckpointManager(f"{comm_dir}/checkpoints")
 
     def generate_summary(self, workflow_status: Optional[Dict] = None) -> str:
         """
@@ -54,14 +59,43 @@ class Dashboard:
         lines.append("└" + "─" * 58 + "┘")
         lines.append("")
 
+        # System statistics section
+        system_stats_view = self.generate_system_stats()
+        lines.append(system_stats_view)
+
+        # Workflow timeline section
+        if workflow_status:
+            workflow_timeline_view = self.generate_workflow_timeline(workflow_status)
+            lines.append(workflow_timeline_view)
+
         # Active agents section
         agents_view = self.generate_active_agents_view(workflow_status)
         lines.append(agents_view)
+
+        # Agent workload section
+        agent_workload_view = self.generate_agent_workload()
+        lines.append(agent_workload_view)
 
         # Task queue section
         if workflow_status:
             task_queue_view = self.generate_task_queue_view(workflow_status)
             lines.append(task_queue_view)
+
+        # Priority distribution section
+        priority_distribution_view = self.generate_priority_distribution()
+        lines.append(priority_distribution_view)
+
+        # Dependencies view section
+        dependency_view = self.generate_dependency_view()
+        lines.append(dependency_view)
+
+        # Message statistics section
+        message_stats_view = self.generate_message_stats()
+        lines.append(message_stats_view)
+
+        # Checkpoint status section
+        checkpoint_status_view = self.generate_checkpoint_status()
+        lines.append(checkpoint_status_view)
 
         # Recent activity
         activity_view = self.generate_activity_feed()
@@ -273,6 +307,326 @@ class Dashboard:
         lines.append("")
         return "\n".join(lines)
 
+    def generate_system_stats(self) -> str:
+        """
+        Generate system statistics section.
+
+        Returns:
+            Formatted system stats
+        """
+        lines = []
+        lines.append("┌" + "─" * 58 + "┐")
+        lines.append("│  📊 SYSTEM STATISTICS" + " " * 36 + "│")
+        lines.append("└" + "─" * 58 + "┘")
+
+        # Get all tasks
+        all_tasks = self._get_all_tasks()
+
+        # Count by status
+        status_counts = {}
+        for task in all_tasks:
+            status = task.status.value
+            status_counts[status] = status_counts.get(status, 0) + 1
+
+        lines.append(f"Total Tasks: {len(all_tasks)}")
+        for status, count in sorted(status_counts.items()):
+            lines.append(f"  {status}: {count}")
+
+        # Agent slots
+        agent_health = self.health_monitor.check_agent_health()
+        active_count = len([h for h in agent_health.values() if h.status == "healthy"])
+        max_agents = self.agent_registry.max_agents
+        available_slots = max_agents - active_count
+
+        lines.append(f"Available Agent Slots: {available_slots}/{max_agents}")
+        lines.append("")
+
+        return "\n".join(lines)
+
+    def generate_priority_distribution(self) -> str:
+        """
+        Generate priority distribution section.
+
+        Returns:
+            Formatted priority distribution
+        """
+        lines = []
+        lines.append("┌" + "─" * 58 + "┐")
+        lines.append("│  🎯 PRIORITY DISTRIBUTION" + " " * 32 + "│")
+        lines.append("└" + "─" * 58 + "┘")
+
+        # Count tasks by priority
+        priority_counts = {"P0": 0, "P1": 0, "P2": 0, "P3": 0}
+        all_tasks = self._get_all_tasks()
+
+        for task in all_tasks:
+            priority = task.priority.value
+            if priority in priority_counts:
+                priority_counts[priority] += 1
+
+        # Generate visual bars
+        max_count = max(priority_counts.values()) if priority_counts.values() else 1
+        bar_width = 40
+
+        for priority in ["P0", "P1", "P2", "P3"]:
+            count = priority_counts[priority]
+            if max_count > 0:
+                bar_length = int((count / max_count) * bar_width)
+            else:
+                bar_length = 0
+            bar = "█" * bar_length
+            lines.append(f"{priority}: {bar} ({count})")
+
+        lines.append("")
+        return "\n".join(lines)
+
+    def generate_dependency_view(self) -> str:
+        """
+        Generate dependencies view section.
+
+        Returns:
+            Formatted dependencies view
+        """
+        lines = []
+        lines.append("┌" + "─" * 58 + "┐")
+        lines.append("│  🔗 DEPENDENCIES" + " " * 41 + "│")
+        lines.append("└" + "─" * 58 + "┘")
+
+        all_tasks = self._get_all_tasks()
+
+        # Find tasks with dependencies
+        blocking_tasks = []
+        waiting_tasks = []
+
+        for task in all_tasks:
+            dependencies = task.dependencies or task.metadata.get('dependencies', [])
+            if dependencies and task.status != TaskStatus.COMPLETED:
+                waiting_tasks.append((task, dependencies))
+
+            # Check if this task is blocking others
+            task_id = task.task_id
+            is_blocking = any(
+                task_id in (t.dependencies or t.metadata.get('dependencies', []))
+                for t in all_tasks
+                if t.status != TaskStatus.COMPLETED
+            )
+            if is_blocking and task.status != TaskStatus.COMPLETED:
+                blocking_tasks.append(task)
+
+        # Display blocking tasks
+        if blocking_tasks:
+            lines.append("Tasks Blocking Others:")
+            for task in blocking_tasks[:3]:  # Show max 3
+                lines.append(f"  🚧 {task.description[:45]}")
+        else:
+            lines.append("No tasks blocking others")
+
+        lines.append("")
+
+        # Display waiting tasks
+        if waiting_tasks:
+            lines.append("Tasks Waiting on Dependencies:")
+            for task, deps in waiting_tasks[:3]:  # Show max 3
+                lines.append(f"  ⏳ {task.description[:45]}")
+        else:
+            lines.append("No tasks waiting on dependencies")
+
+        lines.append("")
+        return "\n".join(lines)
+
+    def generate_agent_workload(self) -> str:
+        """
+        Generate agent workload section.
+
+        Returns:
+            Formatted agent workload
+        """
+        lines = []
+        lines.append("┌" + "─" * 58 + "┐")
+        lines.append("│  ⚙️  AGENT WORKLOAD" + " " * 38 + "│")
+        lines.append("└" + "─" * 58 + "┘")
+
+        all_tasks = self._get_all_tasks()
+        agent_health = self.health_monitor.check_agent_health()
+
+        # Count tasks per agent
+        agent_workload = {}
+        for agent_id in agent_health.keys():
+            completed = 0
+            in_progress = 0
+
+            for task in all_tasks:
+                if task.assigned_to == agent_id:
+                    if task.status == TaskStatus.COMPLETED:
+                        completed += 1
+                    elif task.status == TaskStatus.IN_PROGRESS:
+                        in_progress += 1
+
+            agent_workload[agent_id] = {
+                'completed': completed,
+                'in_progress': in_progress
+            }
+
+        if not agent_workload:
+            lines.append("No agents currently active")
+        else:
+            for agent_id, workload in sorted(agent_workload.items()):
+                lines.append(f"{agent_id}:")
+                lines.append(f"  Completed: {workload['completed']}")
+                lines.append(f"  In Progress: {workload['in_progress']}")
+
+        lines.append("")
+        return "\n".join(lines)
+
+    def generate_message_stats(self) -> str:
+        """
+        Generate message statistics section.
+
+        Returns:
+            Formatted message stats
+        """
+        lines = []
+        lines.append("┌" + "─" * 58 + "┐")
+        lines.append("│  💬 MESSAGE STATISTICS" + " " * 35 + "│")
+        lines.append("└" + "─" * 58 + "┘")
+
+        # Count total messages
+        sent_dir = os.path.join(self.comm_dir, "messaging", "sent")
+        total_messages = 0
+        if os.path.exists(sent_dir):
+            total_messages = len(list(Path(sent_dir).glob("*.json")))
+
+        lines.append(f"Total Messages Sent: {total_messages}")
+        lines.append("")
+
+        # Get unread counts per agent
+        agent_health = self.health_monitor.check_agent_health()
+        if agent_health:
+            lines.append("Unread Messages:")
+            for agent_id in sorted(agent_health.keys()):
+                unread_count = self.message_bus.get_unread_count(agent_id)
+                lines.append(f"  {agent_id}: {unread_count}")
+        else:
+            lines.append("No agents currently active")
+
+        lines.append("")
+        return "\n".join(lines)
+
+    def generate_checkpoint_status(self) -> str:
+        """
+        Generate checkpoint status section.
+
+        Returns:
+            Formatted checkpoint status
+        """
+        lines = []
+        lines.append("┌" + "─" * 58 + "┐")
+        lines.append("│  💾 CHECKPOINT STATUS" + " " * 36 + "│")
+        lines.append("└" + "─" * 58 + "┘")
+
+        agent_health = self.health_monitor.check_agent_health()
+
+        if not agent_health:
+            lines.append("No agents currently active")
+        else:
+            for agent_id in sorted(agent_health.keys()):
+                checkpoints = self.checkpoint_mgr.list_checkpoints(agent_id)
+
+                if checkpoints:
+                    latest_checkpoint = checkpoints[0]
+                    checkpoint_path = Path(latest_checkpoint)
+
+                    # Get file modification time
+                    if checkpoint_path.exists():
+                        mtime = checkpoint_path.stat().st_mtime
+                        checkpoint_time = datetime.fromtimestamp(mtime)
+                        time_ago = (datetime.now() - checkpoint_time).total_seconds()
+
+                        if time_ago < 60:
+                            time_str = f"{int(time_ago)}s ago"
+                        elif time_ago < 3600:
+                            time_str = f"{int(time_ago/60)}m ago"
+                        else:
+                            time_str = f"{int(time_ago/3600)}h ago"
+
+                        # Get file size
+                        size_bytes = self.checkpoint_mgr.get_checkpoint_size(latest_checkpoint)
+                        if size_bytes < 1024:
+                            size_str = f"{size_bytes}B"
+                        elif size_bytes < 1024 * 1024:
+                            size_str = f"{size_bytes/1024:.1f}KB"
+                        else:
+                            size_str = f"{size_bytes/(1024*1024):.1f}MB"
+
+                        lines.append(f"{agent_id}:")
+                        lines.append(f"  Last: {time_str} ({size_str})")
+                    else:
+                        lines.append(f"{agent_id}: No checkpoint")
+                else:
+                    lines.append(f"{agent_id}: No checkpoint")
+
+        lines.append("")
+        return "\n".join(lines)
+
+    def generate_workflow_timeline(self, workflow_status: Optional[Dict] = None) -> str:
+        """
+        Generate workflow timeline section.
+
+        Returns:
+            Formatted workflow timeline
+        """
+        lines = []
+        lines.append("┌" + "─" * 58 + "┐")
+        lines.append("│  📅 WORKFLOW TIMELINE" + " " * 36 + "│")
+        lines.append("└" + "─" * 58 + "┘")
+
+        if not workflow_status:
+            lines.append("No active workflow")
+            lines.append("")
+            return "\n".join(lines)
+
+        progress_info = workflow_status.get('progress', {})
+        total = progress_info.get('total', 0)
+        completed = progress_info.get('completed', 0)
+
+        # Calculate percentage
+        if total > 0:
+            percentage = int((completed / total) * 100)
+        else:
+            percentage = 0
+
+        # Generate progress bar
+        bar_width = 50
+        filled = int(bar_width * percentage / 100)
+        bar = "█" * filled + "░" * (bar_width - filled)
+
+        lines.append(f"Progress: {bar} {percentage}%")
+        lines.append(f"Completed: {completed}/{total} tasks")
+        lines.append("")
+
+        # Show phase status if available
+        workflow = workflow_status.get('workflow', {})
+        phase = workflow.get('current_phase', 'N/A')
+        status = workflow.get('status', 'N/A')
+
+        lines.append(f"Current Phase: {phase}")
+        lines.append(f"Status: {status}")
+
+        lines.append("")
+        return "\n".join(lines)
+
+    def _get_all_tasks(self) -> List:
+        """
+        Get all tasks from all directories.
+
+        Returns:
+            List of all tasks
+        """
+        all_tasks = []
+        for status_dir in ["pending", "in-progress", "blocked", "completed"]:
+            all_tasks.extend(self.task_mgr._get_tasks_in_directory(status_dir))
+        return all_tasks
+
     def _generate_progress_bar(self, percentage: int, width: int = 20) -> str:
         """
         Generate ASCII progress bar.
@@ -378,6 +732,11 @@ def print_dashboard(comm_dir: str = ".agent-comm", workflow_status: Optional[Dic
 
 
 if __name__ == "__main__":
+    # Set UTF-8 encoding for Windows console
+    import sys
+    if sys.platform == 'win32':
+        sys.stdout.reconfigure(encoding='utf-8')
+
     # Example usage
     print("Dashboard - Example Usage")
     print("=" * 60)

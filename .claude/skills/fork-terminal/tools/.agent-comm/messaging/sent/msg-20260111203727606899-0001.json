@@ -1,0 +1,12 @@
+{
+  "message_id": "msg-20260111203727606899-0001",
+  "from_agent": "orchestrator",
+  "to_agent": "architect-001",
+  "message_type": "task_assignment",
+  "payload": {
+    "task_id": "demo-001"
+  },
+  "timestamp": "2026-01-11T20:37:27.606899",
+  "reply_to": null,
+  "read": false
+}

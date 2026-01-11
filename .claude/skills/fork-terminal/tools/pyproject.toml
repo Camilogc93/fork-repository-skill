@@ -1,0 +1,12 @@
+[project]
+name = "agent-orchestration"
+version = "1.0.0"
+description = "Multi-agent orchestration system for Claude Code"
+requires-python = ">=3.11"
+
+[tool.uv]
+dev-dependencies = []
+
+[project.scripts]
+dashboard = "dashboard:print_dashboard"
+orchestrate = "orchestrator_main:main"

@@ -1,0 +1,20 @@
+{
+  "task_id": "close-002",
+  "description": "Update fork_terminal.py to support auto-close on task completion",
+  "assigned_to": "backend-001",
+  "role": "backend",
+  "status": "completed",
+  "priority": "P1",
+  "dependencies": [
+    "close-001"
+  ],
+  "created_at": "2026-01-11T21:19:38.978126",
+  "started_at": "2026-01-11T21:21:39.083869",
+  "completed_at": "2026-01-11T21:25:51.759270",
+  "metadata": {
+    "file": ".claude/skills/fork-terminal/tools/fork_terminal.py",
+    "result": {
+      "output": "fork_terminal.py updated"
+    }
+  }
+}

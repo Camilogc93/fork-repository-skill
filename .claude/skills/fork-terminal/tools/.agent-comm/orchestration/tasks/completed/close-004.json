@@ -1,0 +1,20 @@
+{
+  "task_id": "close-004",
+  "description": "Add task completion callback mechanism to orchestrator_main.py",
+  "assigned_to": "backend-003",
+  "role": "backend",
+  "status": "completed",
+  "priority": "P1",
+  "dependencies": [
+    "close-001"
+  ],
+  "created_at": "2026-01-11T21:19:38.979124",
+  "started_at": "2026-01-11T21:21:39.105509",
+  "completed_at": "2026-01-11T21:25:51.759270",
+  "metadata": {
+    "file": ".claude/skills/fork-terminal/tools/orchestrator_main.py",
+    "result": {
+      "output": "orchestrator_main.py updated"
+    }
+  }
+}

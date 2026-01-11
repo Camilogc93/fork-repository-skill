@@ -31,6 +31,24 @@ from orchestrator import TaskManager, AgentRegistry, Task, TaskStatus
 from message_bus import MessageBus, MessageType
 
 
+def write_completion_signal(agent_id: str, task_id: str, status: str, result: dict = None):
+    """Write completion signal for orchestrator."""
+    signal_dir = Path(".agent-comm/completion")
+    signal_dir.mkdir(parents=True, exist_ok=True)
+
+    signal_file = signal_dir / f"{agent_id}.json"
+    signal_data = {
+        "agent_id": agent_id,
+        "task_id": task_id,
+        "status": status,
+        "result": result or {},
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+
+    with open(signal_file, 'w', encoding='utf-8') as f:
+        json.dump(signal_data, f, indent=2)
+
+
 class AgentWorker:
     """Agent worker that executes tasks in a forked terminal."""
 
@@ -405,6 +423,15 @@ class AgentWorker:
         # Unregister
         self.agent_registry.unregister_agent(self.agent_id)
         print(f"   Unregistered from orchestrator")
+
+        # Write completion signal
+        if self.current_task:
+            write_completion_signal(
+                self.agent_id,
+                self.current_task.task_id,
+                "completed",
+                {"summary": f"Agent {self.agent_id} completed task"}
+            )
 
         print(f"✅ Agent {self.agent_id} stopped")
 
