@@ -178,6 +178,190 @@ These examples demonstrate usage patterns for other projects.
 | **Windows** | Supported           | `cmd /k` via `start`       |
 | **Linux**   | Not yet implemented | —                          |
 
+## Agent Orchestration System
+
+The fork-terminal skill now includes a **hybrid agent orchestration system** that coordinates multiple specialized AI agents working together on complex development tasks.
+
+### Overview
+
+The orchestration system enables Claude to manage multiple agents (frontend, backend, devops, qa, architect) that work in parallel, communicate peer-to-peer, and automatically recover from crashes. Think of it as managing a software development team where each agent has specific expertise.
+
+**Key Features**:
+- 🤝 **5 Specialized Roles**: Frontend, Backend, DevOps, QA, Architect
+- 🔄 **Auto Crash Recovery**: Agents checkpoint every 30s and restart automatically
+- 📊 **Real-time Dashboard**: Monitor agent progress and system health
+- 💾 **Session Persistence**: Pause and resume workflows across sessions
+- 🔗 **Dependency Management**: Automatic task ordering and parallel execution
+- 💬 **Peer-to-Peer Communication**: Agents collaborate directly without orchestrator
+- 🎯 **Max 5 Concurrent Agents**: Efficient resource management
+
+### Quick Start
+
+**Using the Claude Code Skill**:
+```
+orchestrate feature: add user authentication with OAuth
+```
+
+**Programmatic Usage**:
+```python
+from orchestrator_main import MainOrchestrator, break_down_feature
+
+# Create orchestrator
+orchestrator = MainOrchestrator()
+
+# Break down feature into tasks
+tasks = break_down_feature("Add user authentication with OAuth")
+
+# Create and start workflow
+workflow_id = orchestrator.create_workflow(
+    name="User Authentication",
+    description="Implement OAuth authentication",
+    tasks_breakdown=tasks
+)
+
+orchestrator.start_workflow(workflow_id)
+```
+
+### Architecture
+
+```
+┌─────────────────────────────────────┐
+│      Main Orchestrator              │
+│  - Task assignment                  │
+│  - Dependency resolution            │
+│  - Health monitoring                │
+└─────────┬───────────────────────────┘
+          │
+    ┌─────┼─────┐
+    │     │     │
+┌───▼─┐ ┌─▼──┐ ┌▼───┐
+│Agent│ │Agent│ │Agent│
+│  🎨 │ │ ⚙️  │ │ 🚀 │
+└─────┘ └────┘ └────┘
+    └────┬────┘
+         │
+  Peer-to-Peer
+   Message Bus
+```
+
+### Example Workflow
+
+**Feature**: "Implement real-time notifications"
+
+The orchestrator breaks this into specialized tasks:
+
+1. **Architect** 📐 - Design notification system architecture
+2. **DevOps** 🚀 - Set up Redis for pub/sub
+3. **Backend** ⚙️ - Implement WebSocket server
+4. **Frontend** 🎨 - Create notification UI component
+5. **QA** ✅ - Test real-time messaging
+
+Agents work in parallel (where possible), communicate directly, and automatically recover if they crash.
+
+### Dashboard View
+
+```
+┌──────────────────────────────────────────────┐
+│     🎯 AGENT ORCHESTRATION DASHBOARD          │
+│  Workflow: Real-time Notifications           │
+│  Status: running                              │
+└──────────────────────────────────────────────┘
+
+👥 ACTIVE AGENTS
+Active: 3/5
+
+  ✅ ⚙️  backend-001
+     Task: Implement WebSocket server
+     Progress: ████████████░░░░░░░░░░ 40%
+     Last update: 5s ago
+
+  ✅ 🎨 frontend-001
+     Task: Create notification UI
+     Progress: ██████░░░░░░░░░░░░░░░░ 20%
+     Last update: 3s ago
+
+  ✅ 🚀 devops-001
+     Task: Configure Redis pub/sub
+     Progress: ████████████████░░░░░░ 80%
+     Last update: 2s ago
+```
+
+### Documentation
+
+Complete documentation available in `docs/`:
+
+- **[README-ORCHESTRATION.md](docs/README-ORCHESTRATION.md)** - Complete guide to the orchestration system
+- **[AGENT-ROLES.md](docs/AGENT-ROLES.md)** - Detailed role descriptions and customization
+- **[PROJECT-CONTEXT.md](docs/PROJECT-CONTEXT.md)** - Setting up project context for agents
+- **[WORKFLOW-GUIDE.md](docs/WORKFLOW-GUIDE.md)** - Advanced workflow patterns and optimization
+- **[API-REFERENCE.md](docs/API-REFERENCE.md)** - Complete Python API documentation
+
+### Core Components
+
+**Python Modules** (in `.claude/skills/fork-terminal/tools/`):
+
+- `orchestrator_main.py` - Main orchestration logic
+- `orchestrator.py` - Task, dependency, and agent management
+- `message_bus.py` - Peer-to-peer agent communication
+- `checkpoint_manager.py` - State persistence and recovery
+- `health_monitor.py` - Agent health monitoring
+- `agent_worker.py` - Agent execution script
+- `dashboard.py` - Real-time visualization
+- `fork_terminal.py` - Terminal spawning (extended with agent support)
+
+**Configuration Files**:
+
+- `.claude/agents/roles/` - Agent role definitions (5 built-in roles)
+- `.claude/agents/project-context/` - Project-specific context templates
+- `.agent-comm/` - Runtime coordination directory (checkpoints, messages, logs)
+
+### Workflow Commands
+
+When orchestration is active:
+
+- `status` - Show current workflow status
+- `pause` - Pause workflow and save snapshot
+- `resume <workflow-id>` - Resume paused workflow
+- `details <agent-id>` - Show agent details
+- `logs` - View communication logs
+- `kill <agent-id>` - Stop specific agent
+- `restart <agent-id>` - Restart agent with checkpoint
+
+### Use Cases
+
+**Perfect For**:
+- Complex features spanning multiple domains (frontend + backend + infrastructure)
+- Large refactoring efforts requiring coordination
+- Parallel development of independent components
+- Long-running tasks that need crash recovery
+- Multi-step workflows with dependencies
+
+**Not Suitable For**:
+- Simple single-task operations
+- Quick bug fixes
+- Tasks requiring heavy context (each agent sees only their task context)
+
+### Setup
+
+1. Run the setup script:
+   ```bash
+   ./scripts/setup-orchestration.sh
+   ```
+
+2. Configure project context in `.claude/agents/project-context/`:
+   - `00-tech-stack.md` - Technologies used
+   - `01-architecture.md` - System architecture
+   - `02-conventions.md` - Coding standards
+   - `03-setup.md` - Development setup
+   - `04-apis.md` - API documentation
+
+3. Start orchestrating:
+   ```
+   orchestrate feature: <your feature description>
+   ```
+
+See [README-ORCHESTRATION.md](docs/README-ORCHESTRATION.md) for complete setup and usage instructions.
+
 ## Installation
 
 Copy the `.claude/skills/fork-terminal/` directory to your project's `.claude/skills/` folder, or to `~/.claude/skills/` for personal use across all projects.
