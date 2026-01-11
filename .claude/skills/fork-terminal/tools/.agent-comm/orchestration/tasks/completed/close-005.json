@@ -1,0 +1,22 @@
+{
+  "task_id": "close-005",
+  "description": "Test auto-close and orchestrator update functionality",
+  "assigned_to": null,
+  "role": "qa",
+  "status": "completed",
+  "priority": "P2",
+  "dependencies": [
+    "close-002",
+    "close-003",
+    "close-004"
+  ],
+  "created_at": "2026-01-11T21:19:38.979124",
+  "started_at": null,
+  "completed_at": "2026-01-11T21:25:51.759270",
+  "metadata": {
+    "details": "Verify terminals close and orchestrator receives updates",
+    "result": {
+      "output": "Feature verified working"
+    }
+  }
+}

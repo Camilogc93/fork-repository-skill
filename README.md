@@ -1,269 +1,114 @@
-# Fork Terminal Skill
-> A simple skill you can use to fork your agentic coding tools to a new terminal window.
->
-> Why? To offload context (delegate), to branch work, to parallelize work, to run the same command against different tools + models, and more.
->
-> Check out this [YouTube video](https://youtu.be/X2ciJedw2vU) where we build this skill from scratch.
+# Multi-Agent Orchestration System
 
-<img src="images/fork-terminal.png" alt="Fork Terminal Skill" width="800">
+A Claude Code skill that coordinates multiple specialized AI agents working together on complex development tasks. Each agent has specific expertise (frontend, backend, devops, qa, architect) and they communicate peer-to-peer while automatically recovering from failures.
 
-A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skill that enables AI agents to spawn new terminal windows on demand. This skill extends Claude Code's capabilities to launch additional terminal sessions—including other AI coding assistants like Claude Code, Codex CLI, and Gemini CLI—in parallel terminals.
+## Overview
 
-## Requirements
+This system enables Claude to manage a team of AI agents that:
+- Work in parallel on independent tasks
+- Communicate directly with each other
+- Automatically checkpoint and recover from crashes
+- Handle complex features spanning multiple domains
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
-- [Gemini CLI](https://github.com/google-gemini/gemini-cli)
-- [Codex CLI](https://github.com/openai/codex)
+Perfect for large features requiring coordination across frontend, backend, infrastructure, and testing.
 
-## What is a Claude Code Skill?
+## Prerequisites
 
-Claude Code skills are **modular, context-aware capabilities** that extend what Claude can do. Unlike slash commands (which require explicit `/command` invocation), skills are **automatically discovered and invoked** by Claude when user requests match the skill's description.
+**Required**:
+- **Claude Code CLI** - Install with: `npm install -g @anthropic-ai/claude-code`
+- **Python 3.11+** - Required for agent orchestration
+- **uv** (Python package manager) - Install with:
+  ```bash
+  # macOS/Linux
+  curl -LsSf https://astral.sh/uv/install.sh | sh
 
-Skills live in `.claude/skills/` directories and consist of:
-- A `SKILL.md` file defining triggers, instructions, and workflow
-- Supporting files (scripts, templates, documentation)
+  # Windows
+  powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+  ```
 
-When you say something like "fork terminal to run tests with Claude Code", Claude automatically detects the matching skill, reads the instructions, and executes the workflow.
+## Quick Start
 
-## Purpose
+```bash
+# 1. Clone the repository
+git clone <repo-url>
+cd fork-repository-skill
 
-This skill allows you to:
-- **Spawn parallel AI agents** in separate terminal windows
-- **Run raw CLI commands** in new terminals
-- **Pass conversation context** to forked agents (summary mode)
+# 2. Initialize Python environment
+cd .claude/skills/fork-terminal/tools
+uv sync
+cd ../../../..
 
-This is useful when you want Claude to delegate work to another agent running independently, or when you need to run long-running commands in a separate terminal.
+# 3. Start Claude Code
+claude
 
-## Supported Tools
-
-| Tool            | Trigger Examples                      | Default Model          |
-| --------------- | ------------------------------------- | ---------------------- |
-| **Claude Code** | "fork terminal use claude code to..." | `opus`                 |
-| **Codex CLI**   | "fork terminal use codex to..."       | `gpt-5.1-codex-max`    |
-| **Gemini CLI**  | "fork terminal use gemini to..."      | `gemini-3-pro-preview` |
-| **Raw CLI**     | "fork terminal run ffmpeg..."         | N/A                    |
-
-### Model Modifiers
-
-Each agentic tool supports model selection:
-- **Default**: Uses the tool's default model
-- **"fast"**: Uses a lighter, faster model (e.g., `haiku`, `gpt-5.1-codex-mini`, `gemini-2.5-flash`)
-- **"heavy"**: Uses the most capable model
-
-## Usage Examples
-
-### Examples you can run NOW
-
-These examples work against this codebase. Generated files go to `temp/`.
-
-**Claude Code**
-```
-# Analyze the skill architecture and save a report
-"fork terminal use claude code to analyze SKILL.md and write a summary to temp/skill-analysis.md"
-
-# Add Linux support to fork_terminal.py
-"fork terminal use claude code to add Linux support to tools/fork_terminal.py, save changes to temp/fork_terminal_linux.py"
-
-# Generate documentation for the Python tool
-"fork terminal use claude code fast to read tools/fork_terminal.py and generate docstrings, save to temp/fork_terminal_documented.py"
+# 4. Initialize your project for orchestration
+init project
 ```
 
-**Codex CLI**
-```
-# Review the cookbook structure
-"fork terminal use codex to review cookbook/*.md and write suggestions to temp/codex-cookbook-review.md"
+## Project Initialization
 
-# Generate a test file for the fork tool
-"fork terminal use codex to read tools/fork_terminal.py and generate pytest tests, save to temp/test_fork_terminal.py"
+Before using orchestration, initialize your project to configure the system for your tech stack:
 
-# Analyze the SKILL.md workflow
-"fork terminal use codex fast to analyze SKILL.md and explain the workflow in temp/workflow-explained.md"
-```
+```bash
+# Auto-detect your project's tech stack
+init project
 
-**Gemini CLI**
-```
-# Document the skill's purpose
-"fork terminal use gemini to read README.md and SKILL.md, write a one-pager summary to temp/gemini-summary.md"
+# Or use a template
+init project: fullstack-web
+init project: api-service
 
-# Suggest new cookbook entries
-"fork terminal use gemini to review cookbook/ and suggest a new tool integration, save to temp/new-cookbook-idea.md"
-
-# Analyze cross-platform support
-"fork terminal use gemini fast to analyze tools/fork_terminal.py and recommend Linux implementation, save to temp/linux-recommendations.md"
+# Validate your setup
+init project --validate
 ```
 
-**Raw CLI**
-```
-# List all skill files
-"new terminal: find .claude/skills -name '*.md' | head -20"
+The initialization process:
+1. **Detects** your tech stack (frameworks, languages, databases)
+2. **Generates** project context files for agents
+3. **Sets up** runtime directories for coordination
+4. **Validates** everything is ready for orchestration
 
-# Watch for file changes
-"fork terminal: watch -n 2 'ls -la .claude/skills/fork-terminal/'"
-```
+See [Project Initialization Guide](docs/PROJECT-INIT-DESIGN.md) for detailed documentation.
 
-**Multi-Agent Combinations**
-```
-# Fork all three agents to review different aspects of the codebase
-"fork terminal use claude code to review tools/fork_terminal.py and save analysis to temp/claude-tool-review.md,
- then fork terminal use codex to review SKILL.md and save analysis to temp/codex-skill-review.md,
- then fork terminal use gemini to review cookbook/*.md and save analysis to temp/gemini-cookbook-review.md"
+## Usage with Claude Code
 
-# Race all three agents on the same task
-"fork three terminals: claude code, codex, and gemini - each should read README.md and write improvement suggestions to temp/<agent>-readme-suggestions.md"
-
-# Parallel documentation generation
-"fork terminal use claude code to document tools/fork_terminal.py to temp/claude-docs.md,
- fork terminal use codex to document SKILL.md to temp/codex-docs.md,
- fork terminal use gemini to document the cookbook/ files to temp/gemini-docs.md"
-```
-
-**With Conversation Summary (Context Handoff)**
-```
-# Hand off your current conversation context to a new Claude Code agent
-"fork terminal use claude code to request a new plan in temp/specs/<relevant-name>.md that details a net new cookbook file for a new agentic coding tool, summarize work so far"
-
-# Delegate a subtask with full context to Gemini
-"fork terminal use gemini to implement temp/specs/add-linux-support.md that details how to add Linux support to the fork terminal skill, include summary"
-```
-
-### Examples you can run later
-
-These examples demonstrate usage patterns for other projects.
+Once inside Claude Code CLI, use natural language to orchestrate agents:
 
 ```
-# Launch Claude Code for a refactor task
-"fork terminal use claude code to refactor the auth module"
-
-# Use a faster model for quick fixes
-"fork terminal use claude code fast to fix the typo in utils.py"
-
-# Launch Gemini CLI for test generation
-"fork terminal use gemini to write tests for the API"
-
-# Run a dev server in a new terminal
-"create a new terminal to run npm run dev"
-
-# Hand off context to a new agent
-"fork terminal use claude code to implement the feature we discussed, summarize work so far"
-```
-
-## How It Works
-
-1. **Trigger Detection**: Claude detects phrases like "fork terminal", "new terminal", or "fork session"
-2. **Cookbook Selection**: Based on the requested tool, Claude reads the appropriate cookbook (e.g., `claude-code.md`)
-3. **Command Construction**: Claude builds the command with proper flags (interactive mode, model selection, permission bypasses)
-4. **Terminal Spawn**: The `fork_terminal.py` script opens a new terminal window and executes the command
-
-## Architecture
-
-```
-.claude/skills/fork-terminal/
-├── SKILL.md                    # Skill definition and workflow
-├── cookbook/
-│   ├── cli-command.md          # Raw CLI instructions
-│   ├── claude-code.md          # Claude Code agent instructions
-│   ├── codex-cli.md            # Codex CLI instructions
-│   └── gemini-cli.md           # Gemini CLI instructions
-├── prompts/
-│   └── fork_summary_user_prompt.md  # Template for context handoff
-└── tools/
-    └── fork_terminal.py        # Cross-platform terminal spawner
-```
-
-## Platform Support
-
-| Platform    | Status              | Method                     |
-| ----------- | ------------------- | -------------------------- |
-| **macOS**   | Supported           | AppleScript → Terminal.app |
-| **Windows** | Supported           | `cmd /k` via `start`       |
-| **Linux**   | Not yet implemented | —                          |
-
-## Agent Orchestration System
-
-The fork-terminal skill now includes a **hybrid agent orchestration system** that coordinates multiple specialized AI agents working together on complex development tasks.
-
-### Overview
-
-The orchestration system enables Claude to manage multiple agents (frontend, backend, devops, qa, architect) that work in parallel, communicate peer-to-peer, and automatically recover from crashes. Think of it as managing a software development team where each agent has specific expertise.
-
-**Key Features**:
-- 🤝 **5 Specialized Roles**: Frontend, Backend, DevOps, QA, Architect
-- 🔄 **Auto Crash Recovery**: Agents checkpoint every 30s and restart automatically
-- 📊 **Real-time Dashboard**: Monitor agent progress and system health
-- 💾 **Session Persistence**: Pause and resume workflows across sessions
-- 🔗 **Dependency Management**: Automatic task ordering and parallel execution
-- 💬 **Peer-to-Peer Communication**: Agents collaborate directly without orchestrator
-- 🎯 **Max 5 Concurrent Agents**: Efficient resource management
-
-### Quick Start
-
-**Using the Claude Code Skill**:
-```
+# Start a multi-agent workflow
 orchestrate feature: add user authentication with OAuth
+
+# Or fork individual agents
+fork terminal use claude code to implement the backend API
 ```
 
-**Programmatic Usage**:
-```python
-from orchestrator_main import MainOrchestrator, break_down_feature
+## Available Agent Roles
 
-# Create orchestrator
-orchestrator = MainOrchestrator()
+The system includes 5 specialized agent types:
 
-# Break down feature into tasks
-tasks = break_down_feature("Add user authentication with OAuth")
+| Role | Icon | Responsibilities |
+|------|------|------------------|
+| **Architect** | 📐 | System design, architecture decisions, technical documentation |
+| **Backend** | ⚙️ | APIs, business logic, database operations, server-side code |
+| **Frontend** | 🎨 | UI components, styling, client-side interactions |
+| **DevOps** | 🚀 | Infrastructure, CI/CD, deployment, monitoring |
+| **QA** | ✅ | Testing, quality assurance, test automation |
 
-# Create and start workflow
-workflow_id = orchestrator.create_workflow(
-    name="User Authentication",
-    description="Implement OAuth authentication",
-    tasks_breakdown=tasks
-)
+Each agent receives project context and communicates with others automatically.
 
-orchestrator.start_workflow(workflow_id)
+## Monitoring Dashboard
+
+View real-time agent progress and system health:
+
+```bash
+cd .claude/skills/fork-terminal/tools
+uv run python dashboard.py
 ```
 
-### Architecture
-
-```
-┌─────────────────────────────────────┐
-│      Main Orchestrator              │
-│  - Task assignment                  │
-│  - Dependency resolution            │
-│  - Health monitoring                │
-└─────────┬───────────────────────────┘
-          │
-    ┌─────┼─────┐
-    │     │     │
-┌───▼─┐ ┌─▼──┐ ┌▼───┐
-│Agent│ │Agent│ │Agent│
-│  🎨 │ │ ⚙️  │ │ 🚀 │
-└─────┘ └────┘ └────┘
-    └────┬────┘
-         │
-  Peer-to-Peer
-   Message Bus
-```
-
-### Example Workflow
-
-**Feature**: "Implement real-time notifications"
-
-The orchestrator breaks this into specialized tasks:
-
-1. **Architect** 📐 - Design notification system architecture
-2. **DevOps** 🚀 - Set up Redis for pub/sub
-3. **Backend** ⚙️ - Implement WebSocket server
-4. **Frontend** 🎨 - Create notification UI component
-5. **QA** ✅ - Test real-time messaging
-
-Agents work in parallel (where possible), communicate directly, and automatically recover if they crash.
-
-### Dashboard View
-
+**Dashboard View**:
 ```
 ┌──────────────────────────────────────────────┐
 │     🎯 AGENT ORCHESTRATION DASHBOARD          │
-│  Workflow: Real-time Notifications           │
+│  Workflow: User Authentication               │
 │  Status: running                              │
 └──────────────────────────────────────────────┘
 
@@ -271,112 +116,133 @@ Agents work in parallel (where possible), communicate directly, and automaticall
 Active: 3/5
 
   ✅ ⚙️  backend-001
-     Task: Implement WebSocket server
-     Progress: ████████████░░░░░░░░░░ 40%
+     Task: Implement OAuth endpoints
+     Progress: ████████████░░░░░░░░░░ 60%
      Last update: 5s ago
 
   ✅ 🎨 frontend-001
-     Task: Create notification UI
-     Progress: ██████░░░░░░░░░░░░░░░░ 20%
+     Task: Create login UI components
+     Progress: ██████░░░░░░░░░░░░░░░░ 30%
      Last update: 3s ago
 
   ✅ 🚀 devops-001
-     Task: Configure Redis pub/sub
+     Task: Configure auth service
      Progress: ████████████████░░░░░░ 80%
      Last update: 2s ago
 ```
 
-### Documentation
+## Project Structure
 
-Complete documentation available in `docs/`:
+Key directories for the orchestration system:
 
-- **[README-ORCHESTRATION.md](docs/README-ORCHESTRATION.md)** - Complete guide to the orchestration system
-- **[AGENT-ROLES.md](docs/AGENT-ROLES.md)** - Detailed role descriptions and customization
-- **[PROJECT-CONTEXT.md](docs/PROJECT-CONTEXT.md)** - Setting up project context for agents
-- **[WORKFLOW-GUIDE.md](docs/WORKFLOW-GUIDE.md)** - Advanced workflow patterns and optimization
-- **[API-REFERENCE.md](docs/API-REFERENCE.md)** - Complete Python API documentation
+```
+fork-repository-skill/
+├── .claude/
+│   ├── skills/
+│   │   ├── fork-terminal/             # Main orchestration skill
+│   │   │   ├── SKILL.md               # Skill definition
+│   │   │   └── tools/                 # Python orchestration modules
+│   │   │       ├── orchestrator_main.py
+│   │   │       ├── orchestrator.py
+│   │   │       ├── message_bus.py
+│   │   │       ├── checkpoint_manager.py
+│   │   │       ├── health_monitor.py
+│   │   │       ├── agent_worker.py
+│   │   │       ├── dashboard.py
+│   │   │       └── fork_terminal.py
+│   │   │
+│   │   └── project-init/              # Project initialization skill
+│   │       ├── SKILL.md               # Skill definition
+│   │       └── tools/                 # Initialization tools
+│   │           ├── detector.py        # Tech stack auto-detection
+│   │           ├── generator.py       # Config file generation
+│   │           ├── validator.py       # Setup validation
+│   │           └── main.py            # CLI entry point
+│   │
+│   └── agents/
+│       ├── roles/                     # Agent role definitions
+│       │   ├── architect.md           # 📐 System design role
+│       │   ├── backend.md             # ⚙️ Backend development role
+│       │   ├── frontend.md            # 🎨 Frontend development role
+│       │   ├── devops.md              # 🚀 Infrastructure role
+│       │   └── qa.md                  # ✅ Testing role
+│       ├── project-context/           # Project-specific context
+│       │   ├── 00-tech-stack.md
+│       │   ├── 01-architecture.md
+│       │   ├── 02-conventions.md
+│       │   ├── 03-setup.md
+│       │   └── 04-apis.md
+│       └── templates/                 # Project templates
+│           └── projects/
+│               ├── fullstack-web.yaml
+│               └── api-service.yaml
+│
+└── .agent-comm/                       # Runtime coordination
+    ├── orchestration/tasks/           # Task queue
+    ├── messaging/                     # Inter-agent messages
+    ├── checkpoints/                   # Agent state snapshots
+    ├── shared-knowledge/              # Shared artifacts
+    └── logs/                          # Execution logs
+```
 
-### Core Components
+## Example Workflow
 
-**Python Modules** (in `.claude/skills/fork-terminal/tools/`):
+Here's how the system handles a complex feature:
 
-- `orchestrator_main.py` - Main orchestration logic
-- `orchestrator.py` - Task, dependency, and agent management
-- `message_bus.py` - Peer-to-peer agent communication
-- `checkpoint_manager.py` - State persistence and recovery
-- `health_monitor.py` - Agent health monitoring
-- `agent_worker.py` - Agent execution script
-- `dashboard.py` - Real-time visualization
-- `fork_terminal.py` - Terminal spawning (extended with agent support)
+**User Request**: "Implement real-time notifications"
 
-**Configuration Files**:
+**Claude orchestrates**:
 
-- `.claude/agents/roles/` - Agent role definitions (5 built-in roles)
-- `.claude/agents/project-context/` - Project-specific context templates
-- `.agent-comm/` - Runtime coordination directory (checkpoints, messages, logs)
+1. **Architect** 📐 - Designs notification system architecture
+2. **DevOps** 🚀 - Sets up Redis for pub/sub (runs in parallel with step 1)
+3. **Backend** ⚙️ - Implements WebSocket server (waits for steps 1-2)
+4. **Frontend** 🎨 - Creates notification UI (waits for step 3)
+5. **QA** ✅ - Tests real-time messaging (waits for steps 3-4)
 
-### Workflow Commands
+Agents communicate peer-to-peer, checkpoint every 30 seconds, and auto-recover from crashes.
 
-When orchestration is active:
+## Advanced Features
 
-- `status` - Show current workflow status
-- `pause` - Pause workflow and save snapshot
-- `resume <workflow-id>` - Resume paused workflow
-- `details <agent-id>` - Show agent details
-- `logs` - View communication logs
-- `kill <agent-id>` - Stop specific agent
-- `restart <agent-id>` - Restart agent with checkpoint
+**Key Capabilities**:
+- **Auto Crash Recovery** - Agents checkpoint every 30s and restart automatically
+- **Session Persistence** - Pause and resume workflows across sessions
+- **Dependency Management** - Automatic task ordering and parallel execution
+- **Peer-to-Peer Communication** - Agents collaborate directly without bottlenecks
+- **Max 5 Concurrent Agents** - Efficient resource management
 
-### Use Cases
-
-**Perfect For**:
+**When to Use**:
 - Complex features spanning multiple domains (frontend + backend + infrastructure)
 - Large refactoring efforts requiring coordination
 - Parallel development of independent components
 - Long-running tasks that need crash recovery
-- Multi-step workflows with dependencies
 
-**Not Suitable For**:
+**When NOT to Use**:
 - Simple single-task operations
 - Quick bug fixes
-- Tasks requiring heavy context (each agent sees only their task context)
+- Tasks requiring heavy shared context
 
-### Setup
+## Additional Documentation
 
-1. Run the setup script:
-   ```bash
-   ./scripts/setup-orchestration.sh
-   ```
+Complete guides available in the `docs/` directory:
 
-2. Configure project context in `.claude/agents/project-context/`:
-   - `00-tech-stack.md` - Technologies used
-   - `01-architecture.md` - System architecture
-   - `02-conventions.md` - Coding standards
-   - `03-setup.md` - Development setup
-   - `04-apis.md` - API documentation
+- **[README-ORCHESTRATION.md](docs/README-ORCHESTRATION.md)** - Complete orchestration guide
+- **[PROJECT-INIT-DESIGN.md](docs/PROJECT-INIT-DESIGN.md)** - Project initialization feature design
+- **[AGENT-ROLES.md](docs/AGENT-ROLES.md)** - Role descriptions and customization
+- **[PROJECT-CONTEXT.md](docs/PROJECT-CONTEXT.md)** - Project context setup
+- **[WORKFLOW-GUIDE.md](docs/WORKFLOW-GUIDE.md)** - Advanced workflow patterns
+- **[API-REFERENCE.md](docs/API-REFERENCE.md)** - Python API documentation
 
-3. Start orchestrating:
-   ```
-   orchestrate feature: <your feature description>
-   ```
+## Platform Support
 
-See [README-ORCHESTRATION.md](docs/README-ORCHESTRATION.md) for complete setup and usage instructions.
+| Platform | Status | Terminal Method |
+|----------|--------|-----------------|
+| **macOS** | ✅ Supported | AppleScript → Terminal.app |
+| **Windows** | ✅ Supported | `cmd /k` via `start` |
+| **Linux** | ⚠️ Not implemented | — |
 
-## Installation
+## Resources
 
-Copy the `.claude/skills/fork-terminal/` directory to your project's `.claude/skills/` folder, or to `~/.claude/skills/` for personal use across all projects.
-
-## Improvements
-
-Ideas for future enhancements:
-
-- **Focus spawned windows** - Bring new terminal windows to front automatically, or keep them in background based on user preference
-- **More agentic coding tools** - Add cookbooks for OpenCode, and other agentic coding tools.
-- **Whatever else you can think of** - Feel free to fork the terminal fork skill and make it your own.
-
-## Master **Agentic Coding**
-> Prepare for the future of software engineering
-
-Learn tactical agentic coding patterns with [Tactical Agentic Coding](https://agenticengineer.com/tactical-agentic-coding?y=frktskl)
-
-Follow the [IndyDevDan YouTube channel](https://www.youtube.com/@indydevdan) to improve your agentic coding advantage.
+**Learn More**:
+- [YouTube: Building this skill from scratch](https://youtu.be/X2ciJedw2vU)
+- [Tactical Agentic Coding Course](https://agenticengineer.com/tactical-agentic-coding?y=frktskl)
+- [IndyDevDan YouTube Channel](https://www.youtube.com/@indydevdan)

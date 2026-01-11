@@ -3,11 +3,19 @@
 
 import os
 import platform
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
+
+
+def get_python_command() -> List[str]:
+    """Get the python command with uv if available."""
+    if shutil.which('uv'):
+        return ['uv', 'run', 'python']
+    return ['python3']
 
 
 def fork_terminal(command: str) -> str:
@@ -36,7 +44,7 @@ def fork_terminal(command: str) -> str:
     elif system == "Windows":
         # Use /d flag to change drives if necessary
         full_command = f'cd /d "{cwd}" && {command}'
-        subprocess.Popen(["cmd", "/c", "start", "cmd", "/k", full_command], shell=True)
+        subprocess.Popen(["cmd", "/c", "start", "cmd", "/c", full_command], shell=True)
         return "Windows terminal launched"
 
     else:  # Linux and others
@@ -229,6 +237,10 @@ def fork_agent(
         ...     task={"task_id": "task-042", "description": "Build login form"}
         ... )
     """
+    # Create completion directory
+    completion_dir = Path(comm_dir) / "completion"
+    completion_dir.mkdir(parents=True, exist_ok=True)
+
     # Create context file
     context_file = create_agent_context_file(
         agent_id=agent_id,
@@ -242,8 +254,7 @@ def fork_agent(
     # Note: Assuming agent_worker.py is in same directory
     worker_script = Path(__file__).parent / "agent_worker.py"
 
-    command_parts = [
-        "python3",
+    command_parts = get_python_command() + [
         str(worker_script),
         f"--agent-id {agent_id}",
         f"--role {role}",

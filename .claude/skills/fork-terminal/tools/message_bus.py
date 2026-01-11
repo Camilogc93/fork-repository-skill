@@ -126,12 +126,12 @@ class MessageBus:
         recipient_inbox.mkdir(exist_ok=True)
         inbox_file = recipient_inbox / f"{message_id}.json"
 
-        with open(inbox_file, 'w') as f:
+        with open(inbox_file, 'w', encoding='utf-8') as f:
             json.dump(message.to_dict(), f, indent=2)
 
         # Save to sent folder
         sent_file = self.sent_dir / f"{message_id}.json"
-        with open(sent_file, 'w') as f:
+        with open(sent_file, 'w', encoding='utf-8') as f:
             json.dump(message.to_dict(), f, indent=2)
 
         # Log communication
@@ -207,7 +207,7 @@ class MessageBus:
 
         for msg_file in message_files:
             try:
-                with open(msg_file) as f:
+                with open(msg_file, encoding='utf-8') as f:
                     data = json.load(f)
                 message = Message.from_dict(data)
 
@@ -240,12 +240,12 @@ class MessageBus:
             return False
 
         try:
-            with open(msg_file) as f:
+            with open(msg_file, encoding='utf-8') as f:
                 data = json.load(f)
 
             data['read'] = True
 
-            with open(msg_file, 'w') as f:
+            with open(msg_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2)
 
             return True
@@ -287,7 +287,7 @@ class MessageBus:
             return None
 
         try:
-            with open(msg_file) as f:
+            with open(msg_file, encoding='utf-8') as f:
                 data = json.load(f)
             return Message.from_dict(data)
         except Exception:
@@ -334,7 +334,7 @@ class MessageBus:
         if agent1_inbox.exists():
             for msg_file in agent1_inbox.glob("*.json"):
                 try:
-                    with open(msg_file) as f:
+                    with open(msg_file, encoding='utf-8') as f:
                         data = json.load(f)
                     message = Message.from_dict(data)
                     if message.from_agent == agent2_id:
@@ -347,7 +347,7 @@ class MessageBus:
         if agent2_inbox.exists():
             for msg_file in agent2_inbox.glob("*.json"):
                 try:
-                    with open(msg_file) as f:
+                    with open(msg_file, encoding='utf-8') as f:
                         data = json.load(f)
                     message = Message.from_dict(data)
                     if message.from_agent == agent1_id:
@@ -378,7 +378,7 @@ class MessageBus:
         # Search all sent messages
         for msg_file in self.sent_dir.glob("*.json"):
             try:
-                with open(msg_file) as f:
+                with open(msg_file, encoding='utf-8') as f:
                     data = json.load(f)
                 message = Message.from_dict(data)
 
@@ -422,12 +422,12 @@ class MessageBus:
         """Log message to communications log."""
         log_entry = (
             f"[{message.timestamp}] "
-            f"{message.from_agent} → {message.to_agent} "
+            f"{message.from_agent} -> {message.to_agent} "
             f"[{message.message_type.value}] "
             f"ID: {message.message_id}\n"
         )
 
-        with open(self.log_file, 'a') as f:
+        with open(self.log_file, 'a', encoding='utf-8') as f:
             f.write(log_entry)
 
 

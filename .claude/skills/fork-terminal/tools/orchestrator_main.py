@@ -14,6 +14,7 @@ This is the main entry point for multi-agent orchestration.
 """
 
 import json
+import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -494,6 +495,43 @@ class MainOrchestrator:
         snapshot_file = self.workflows_dir / f"{workflow.workflow_id}-snapshot.json"
         with open(snapshot_file, 'w') as f:
             json.dump(snapshot, f, indent=2)
+
+    def watch_completions(self, interval: int = 5):
+        """Poll for agent completion signals."""
+        completion_dir = Path(self.comm_dir) / "completion"
+        completion_dir.mkdir(parents=True, exist_ok=True)
+
+        while getattr(self, 'running', True):
+            for signal_file in completion_dir.glob("*.json"):
+                self._process_completion_signal(signal_file)
+            time.sleep(interval)
+
+    def _process_completion_signal(self, signal_file: Path):
+        """Process completion signal and update task status."""
+        try:
+            with open(signal_file, encoding='utf-8') as f:
+                data = json.load(f)
+
+            task_id = data.get("task_id")
+            status = data.get("status", "completed")
+
+            # Update task via task manager
+            if status == "completed":
+                self.task_mgr.complete_task(task_id, result=data.get("result"))
+
+            print(f"Agent {data['agent_id']} completed task {task_id}")
+
+            # Remove processed signal
+            signal_file.unlink()
+
+        except Exception as e:
+            print(f"Error processing signal: {e}")
+
+    def start_completion_watcher(self):
+        """Start background thread to watch for completions."""
+        self.running = True
+        self.watcher_thread = threading.Thread(target=self.watch_completions, daemon=True)
+        self.watcher_thread.start()
 
 
 def break_down_feature(feature_description: str) -> List[Dict[str, Any]]:

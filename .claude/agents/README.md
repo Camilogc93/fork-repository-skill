@@ -20,6 +20,11 @@ This directory contains the configuration for the hybrid agent orchestration sys
 │   ├── 03-setup.md         # Development environment setup
 │   └── 04-apis.md          # API documentation and patterns
 │
+├── templates/          # Project templates for initialization
+│   └── projects/
+│       ├── fullstack-web.yaml   # Full-stack web app template
+│       └── api-service.yaml     # API service template
+│
 └── session-state/      # Persistent session data between runs
     └── (agent checkpoints stored here)
 ```
@@ -56,7 +61,31 @@ When agents are working and need to be paused or crash, their state is saved her
 
 ## Getting Started
 
-### 1. Define Your Agent Roles
+### Option A: Automatic Initialization (Recommended)
+
+Use the project initialization skill to auto-configure everything:
+
+```bash
+# Auto-detect tech stack and generate configuration
+init project
+
+# Or use a predefined template
+init project: fullstack-web
+init project: api-service
+
+# Validate your setup
+init project --validate
+```
+
+This will:
+1. Detect your project's tech stack (frameworks, languages, databases)
+2. Generate customized project context files
+3. Set up runtime directories
+4. Validate everything is ready
+
+### Option B: Manual Configuration
+
+#### 1. Define Your Agent Roles
 Copy the template role files and customize them for your needs:
 
 ```bash
@@ -65,7 +94,7 @@ vim .claude/agents/roles/frontend.md
 vim .claude/agents/roles/backend.md
 ```
 
-### 2. Configure Your Project Context
+#### 2. Configure Your Project Context
 Fill out the project context files with your project's specifics:
 
 ```bash
@@ -171,6 +200,22 @@ ORCHESTRATOR:
 
 See the main documentation for more details:
 - `README-ORCHESTRATION.md` - Full orchestration guide
+- `PROJECT-INIT-DESIGN.md` - Project initialization feature design
 - `AGENT-ROLES.md` - Guide to customizing roles
 - `PROJECT-CONTEXT.md` - How to configure project context
 - `WORKFLOW-GUIDE.md` - Managing workflows
+
+## Project Templates
+
+Available templates for quick project setup:
+
+| Template | Description | Use Case |
+|----------|-------------|----------|
+| `fullstack-web` | Frontend SPA + Backend API | Web applications |
+| `api-service` | REST/GraphQL API service | Backend services |
+
+Templates automatically configure:
+- Tech stack documentation
+- Agent role customizations
+- Project conventions
+- Development setup instructions

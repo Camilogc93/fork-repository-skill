@@ -1,0 +1,16 @@
+{
+  "close-002": [
+    "close-001"
+  ],
+  "close-003": [
+    "close-001"
+  ],
+  "close-004": [
+    "close-001"
+  ],
+  "close-005": [
+    "close-002",
+    "close-003",
+    "close-004"
+  ]
+}

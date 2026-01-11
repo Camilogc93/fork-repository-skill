@@ -1,0 +1,597 @@
+# API Service Template
+# Use: init project: api-service
+
+name: API Service
+description: Backend API service (REST/GraphQL) without frontend
+version: "1.0"
+
+# Template variables
+variables:
+  project_name:
+    prompt: "Service name"
+    type: string
+    default: "my-api"
+    validation: "^[a-z][a-z0-9-]*$"
+
+  framework:
+    prompt: "API framework"
+    type: choice
+    options:
+      - label: "FastAPI (Python)"
+        value: fastapi
+        recommended: true
+        description: "Modern async Python with automatic OpenAPI docs"
+      - label: "Express (Node.js)"
+        value: express
+        description: "Minimal and flexible Node.js framework"
+      - label: "NestJS (Node.js)"
+        value: nestjs
+        description: "Enterprise-grade TypeScript framework"
+      - label: "Django REST (Python)"
+        value: django
+        description: "Batteries-included with Django admin"
+      - label: "Go/Gin"
+        value: gin
+        description: "High-performance Go framework"
+      - label: "Rust/Axum"
+        value: axum
+        description: "Type-safe Rust framework"
+    default: fastapi
+
+  api_style:
+    prompt: "API style"
+    type: choice
+    options:
+      - label: "REST"
+        value: rest
+        recommended: true
+        description: "Resource-based HTTP API"
+      - label: "GraphQL"
+        value: graphql
+        description: "Query language for APIs"
+      - label: "gRPC"
+        value: grpc
+        description: "High-performance RPC framework"
+    default: rest
+
+  database:
+    prompt: "Database"
+    type: choice
+    options:
+      - label: "PostgreSQL"
+        value: postgresql
+        recommended: true
+      - label: "MySQL"
+        value: mysql
+      - label: "MongoDB"
+        value: mongodb
+      - label: "Redis (cache only)"
+        value: redis
+      - label: "None"
+        value: none
+    default: postgresql
+
+  authentication:
+    prompt: "Authentication"
+    type: choice
+    options:
+      - label: "JWT Tokens"
+        value: jwt
+        recommended: true
+      - label: "API Keys"
+        value: apikey
+      - label: "OAuth2"
+        value: oauth2
+      - label: "None"
+        value: none
+    default: jwt
+
+  caching:
+    prompt: "Caching layer"
+    type: choice
+    options:
+      - label: "Redis"
+        value: redis
+        recommended: true
+      - label: "In-memory"
+        value: memory
+      - label: "None"
+        value: none
+    default: redis
+
+  message_queue:
+    prompt: "Message queue (for async tasks)"
+    type: choice
+    options:
+      - label: "None"
+        value: none
+        recommended: true
+      - label: "Redis/Celery"
+        value: celery
+      - label: "RabbitMQ"
+        value: rabbitmq
+      - label: "AWS SQS"
+        value: sqs
+    default: none
+
+  deployment:
+    prompt: "Deployment"
+    type: choice
+    options:
+      - label: "Docker"
+        value: docker
+        recommended: true
+      - label: "Kubernetes"
+        value: kubernetes
+      - label: "Serverless"
+        value: serverless
+    default: docker
+
+# Project structure
+structure:
+  directories:
+    - path: "src/api"
+      description: "API route handlers"
+    - path: "src/services"
+      description: "Business logic layer"
+    - path: "src/models"
+      description: "Database models"
+    - path: "src/schemas"
+      description: "Request/response schemas"
+    - path: "src/repositories"
+      description: "Data access layer"
+    - path: "src/core"
+      description: "Configuration, dependencies"
+    - path: "src/middleware"
+      description: "Request middleware"
+    - path: "tests/unit"
+      description: "Unit tests"
+    - path: "tests/integration"
+      description: "Integration tests"
+    - path: "migrations"
+      description: "Database migrations"
+
+# Agent configuration
+agent_roles:
+  required:
+    - backend
+    - qa
+
+  optional:
+    - devops
+    - architect
+
+  customizations:
+    backend:
+      focus_areas:
+        - "{{ api_style | upper }} API design with {{ framework }}"
+        - "Database operations with {{ database }}"
+        - "Authentication: {{ authentication }}"
+        - "Input validation and error handling"
+        - "Performance optimization"
+      tools:
+        - "{{ 'pytest' if framework in ['fastapi', 'django'] else 'jest' if framework in ['express', 'nestjs'] else 'go test' if framework == 'gin' else 'cargo test' }}"
+        - "{{ 'httpie' }}"
+        - docker
+
+    qa:
+      focus_areas:
+        - "API contract testing"
+        - "Load testing and benchmarks"
+        - "Security testing (OWASP)"
+        - "Integration tests"
+
+    devops:
+      focus_areas:
+        - "Container optimization"
+        - "Health checks and monitoring"
+        - "CI/CD pipeline"
+        - "Secrets management"
+
+# Context templates
+context_templates:
+  tech_stack: |
+    # API Service Tech Stack
+
+    ## Core
+
+    ### Framework
+    - **Framework**: {{ framework | title }}
+    - **Language**: {{ language[framework] }}
+    - **API Style**: {{ api_style | upper }}
+
+    ### Database
+    {% if database != 'none' %}
+    - **Database**: {{ database | title }}
+    - **ORM**: {{ orm[framework] }}
+    {% else %}
+    - **Database**: None (stateless service)
+    {% endif %}
+
+    ### Authentication
+    {% if authentication != 'none' %}
+    - **Method**: {{ authentication | upper }}
+    {% else %}
+    - **Method**: None (internal service)
+    {% endif %}
+
+    {% if caching != 'none' %}
+    ### Caching
+    - **System**: {{ caching | title }}
+    {% endif %}
+
+    {% if message_queue != 'none' %}
+    ### Message Queue
+    - **System**: {{ message_queue | title }}
+    {% endif %}
+
+    ---
+
+    ## Testing
+
+    - **Unit Tests**: {{ test_framework[framework] }}
+    - **API Tests**: {{ 'pytest + httpx' if framework in ['fastapi', 'django'] else 'supertest' if framework in ['express', 'nestjs'] else 'testing' }}
+    - **Load Tests**: k6 or locust
+
+    ---
+
+    ## Infrastructure
+
+    - **Container**: Docker
+    - **Deployment**: {{ deployment | title }}
+    - **CI/CD**: GitHub Actions
+
+  architecture: |
+    # {{ project_name }} Architecture
+
+    ## Overview
+
+    {{ project_name }} is a {{ api_style | upper }} API service built with {{ framework | title }}.
+
+    ## Directory Structure
+
+    ```
+    {{ project_name }}/
+    ├── src/
+    │   ├── api/              # Route handlers
+    │   │   ├── v1/           # API version 1
+    │   │   └── health.py     # Health check endpoint
+    │   │
+    │   ├── services/         # Business logic
+    │   │   └── *.py          # Service classes
+    │   │
+    │   ├── models/           # Database models
+    │   │   └── *.py          # ORM models
+    │   │
+    │   ├── schemas/          # Validation schemas
+    │   │   └── *.py          # Pydantic/Joi schemas
+    │   │
+    │   ├── repositories/     # Data access
+    │   │   └── *.py          # Repository pattern
+    │   │
+    │   ├── core/             # Configuration
+    │   │   ├── config.py     # Settings
+    │   │   └── deps.py       # Dependencies
+    │   │
+    │   └── middleware/       # Request middleware
+    │
+    ├── tests/
+    │   ├── unit/             # Unit tests
+    │   └── integration/      # API tests
+    │
+    ├── migrations/           # Database migrations
+    ├── Dockerfile
+    └── docker-compose.yml
+    ```
+
+    ## Layered Architecture
+
+    ```
+    ┌─────────────────────────────────────┐
+    │           API Layer                 │  ← HTTP handlers, validation
+    ├─────────────────────────────────────┤
+    │         Service Layer               │  ← Business logic
+    ├─────────────────────────────────────┤
+    │       Repository Layer              │  ← Data access
+    ├─────────────────────────────────────┤
+    │         Database                    │  ← {{ database | title }}
+    └─────────────────────────────────────┘
+    ```
+
+    ## Key Patterns
+
+    - **Dependency Injection**: Services injected into routes
+    - **Repository Pattern**: Abstract database operations
+    - **Schema Validation**: Input/output validation
+    - **Error Handling**: Consistent error responses
+
+  conventions: |
+    # Coding Conventions
+
+    ## Project Structure
+
+    ### Layered Approach
+    1. **API Layer** (`src/api/`): Only HTTP concerns
+    2. **Service Layer** (`src/services/`): All business logic
+    3. **Repository Layer** (`src/repositories/`): Database queries
+    4. **Models** (`src/models/`): ORM definitions
+    5. **Schemas** (`src/schemas/`): Validation
+
+    ## Naming Conventions
+
+    {% if framework in ['fastapi', 'django'] %}
+    ### Python
+    - Files: `snake_case.py`
+    - Classes: `PascalCase`
+    - Functions: `snake_case`
+    - Constants: `UPPER_SNAKE_CASE`
+
+    ### Example
+    ```python
+    # src/services/user_service.py
+    class UserService:
+        async def get_user_by_id(self, user_id: int) -> User:
+            return await self.repository.find_by_id(user_id)
+    ```
+    {% else %}
+    ### TypeScript/JavaScript
+    - Files: `kebab-case.ts`
+    - Classes: `PascalCase`
+    - Functions: `camelCase`
+    - Constants: `UPPER_SNAKE_CASE`
+
+    ### Example
+    ```typescript
+    // src/services/user-service.ts
+    export class UserService {
+      async getUserById(userId: string): Promise<User> {
+        return this.repository.findById(userId);
+      }
+    }
+    ```
+    {% endif %}
+
+    ## API Design
+
+    ### URL Patterns
+    - Use nouns: `/users`, `/orders`
+    - Use plural: `/users` not `/user`
+    - Nest relationships: `/users/{id}/orders`
+
+    ### HTTP Methods
+    - GET: Read resources
+    - POST: Create resources
+    - PUT: Replace resources
+    - PATCH: Partial update
+    - DELETE: Remove resources
+
+    ### Response Codes
+    - 200: Success
+    - 201: Created
+    - 400: Bad request
+    - 401: Unauthorized
+    - 403: Forbidden
+    - 404: Not found
+    - 500: Server error
+
+  setup: |
+    # Development Setup
+
+    ## Prerequisites
+
+    {% if framework in ['fastapi', 'django'] %}
+    - Python 3.11+
+    - pip or poetry
+    {% elif framework in ['express', 'nestjs'] %}
+    - Node.js 20+
+    - npm or yarn
+    {% elif framework == 'gin' %}
+    - Go 1.21+
+    {% elif framework == 'axum' %}
+    - Rust (latest stable)
+    {% endif %}
+    - Docker and Docker Compose
+    {% if database == 'postgresql' %}
+    - PostgreSQL 15+ (or use Docker)
+    {% endif %}
+
+    ## Quick Start
+
+    ### Docker (Recommended)
+
+    ```bash
+    # Start all services
+    docker-compose up -d
+
+    # View logs
+    docker-compose logs -f api
+
+    # API available at http://localhost:8000
+    ```
+
+    ### Local Development
+
+    ```bash
+    {% if framework in ['fastapi', 'django'] %}
+    # Create virtual environment
+    python -m venv venv
+    source venv/bin/activate  # Windows: venv\Scripts\activate
+
+    # Install dependencies
+    pip install -r requirements.txt
+
+    # Run migrations
+    alembic upgrade head
+
+    # Start server
+    uvicorn src.main:app --reload
+    {% elif framework in ['express', 'nestjs'] %}
+    # Install dependencies
+    npm install
+
+    # Run migrations
+    npx prisma migrate dev
+
+    # Start server
+    npm run dev
+    {% elif framework == 'gin' %}
+    # Install dependencies
+    go mod download
+
+    # Run migrations
+    go run cmd/migrate/main.go
+
+    # Start server
+    go run cmd/api/main.go
+    {% endif %}
+    ```
+
+    ## Environment Variables
+
+    ```bash
+    # .env
+    {% if database != 'none' %}
+    DATABASE_URL={{ database }}://user:pass@localhost:5432/{{ project_name }}
+    {% endif %}
+    {% if authentication == 'jwt' %}
+    JWT_SECRET=your-super-secret-key
+    JWT_EXPIRY=3600
+    {% endif %}
+    {% if caching == 'redis' %}
+    REDIS_URL=redis://localhost:6379
+    {% endif %}
+    LOG_LEVEL=debug
+    ```
+
+    ## Testing
+
+    ```bash
+    {% if framework in ['fastapi', 'django'] %}
+    # Run all tests
+    pytest
+
+    # With coverage
+    pytest --cov=src
+
+    # Specific tests
+    pytest tests/unit/
+    pytest tests/integration/
+    {% else %}
+    # Run all tests
+    npm test
+
+    # With coverage
+    npm run test:cov
+    {% endif %}
+    ```
+
+  apis: |
+    # API Documentation
+
+    ## Base URL
+
+    - Local: `http://localhost:8000`
+    - Staging: `https://{{ project_name }}-staging.example.com`
+    - Production: `https://{{ project_name }}.example.com`
+
+    {% if framework == 'fastapi' %}
+    ## Interactive Docs
+
+    - Swagger UI: `http://localhost:8000/docs`
+    - ReDoc: `http://localhost:8000/redoc`
+    - OpenAPI JSON: `http://localhost:8000/openapi.json`
+    {% endif %}
+
+    ## Authentication
+
+    {% if authentication == 'jwt' %}
+    ### JWT Authentication
+
+    ```bash
+    # Login to get token
+    curl -X POST /auth/login \
+      -H "Content-Type: application/json" \
+      -d '{"email": "user@example.com", "password": "secret"}'
+
+    # Use token
+    curl /users/me \
+      -H "Authorization: Bearer <token>"
+    ```
+    {% elif authentication == 'apikey' %}
+    ### API Key Authentication
+
+    ```bash
+    curl /users \
+      -H "X-API-Key: your-api-key"
+    ```
+    {% endif %}
+
+    ## Response Format
+
+    ### Success
+    ```json
+    {
+      "data": { ... },
+      "meta": {
+        "timestamp": "2024-01-01T00:00:00Z"
+      }
+    }
+    ```
+
+    ### Error
+    ```json
+    {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Description",
+        "details": [...]
+      }
+    }
+    ```
+
+    ## Core Endpoints
+
+    ### Health
+    | Method | Endpoint | Description |
+    |--------|----------|-------------|
+    | GET | `/health` | Health check |
+    | GET | `/health/ready` | Readiness probe |
+    | GET | `/health/live` | Liveness probe |
+
+    {% if authentication != 'none' %}
+    ### Authentication
+    | Method | Endpoint | Description |
+    |--------|----------|-------------|
+    | POST | `/auth/login` | Authenticate |
+    | POST | `/auth/register` | Create account |
+    | POST | `/auth/refresh` | Refresh token |
+    {% endif %}
+
+    ### Resources
+    Document your endpoints here:
+
+    | Method | Endpoint | Description | Auth |
+    |--------|----------|-------------|------|
+    | GET | `/v1/resource` | List resources | Yes |
+    | POST | `/v1/resource` | Create resource | Yes |
+    | GET | `/v1/resource/{id}` | Get resource | Yes |
+    | PUT | `/v1/resource/{id}` | Update resource | Yes |
+    | DELETE | `/v1/resource/{id}` | Delete resource | Yes |
+
+# Orchestration settings
+orchestration:
+  max_concurrent_agents: 3
+  auto_recovery: true
+
+  typical_workflows:
+    - name: "Add Endpoint"
+      agents: [backend, qa]
+      description: "Add new API endpoint"
+
+    - name: "Database Change"
+      agents: [backend, qa, devops]
+      description: "Schema change with migration"
+
+    - name: "Performance Fix"
+      agents: [backend, qa]
+      description: "Optimize slow endpoint"
