@@ -1,0 +1,38 @@
+# Agent Communication Runtime Files
+# These are generated during agent execution and should not be committed
+
+# Agent status files (ephemeral)
+agents/status/*.json
+
+# Task files (runtime state)
+orchestration/tasks/pending/*.json
+orchestration/tasks/in-progress/*.json
+orchestration/tasks/blocked/*.json
+orchestration/tasks/completed/*.json
+
+# Workflows (runtime state)
+orchestration/workflows/*.json
+
+# Dependencies graph (runtime)
+orchestration/dependencies.json
+
+# Messages (ephemeral)
+messaging/inbox/**/*.json
+messaging/sent/*.json
+
+# Checkpoints (can be large)
+checkpoints/*.json
+
+# Shared knowledge generated at runtime
+shared-knowledge/api-contracts/*.yaml
+shared-knowledge/api-contracts/*.json
+shared-knowledge/design-decisions/*.md
+shared-knowledge/handoffs/*.json
+
+# Keep log files for debugging
+!logs/
+logs/*.log
+
+# Keep .gitkeep files
+!.gitkeep
+!**/.gitkeep
