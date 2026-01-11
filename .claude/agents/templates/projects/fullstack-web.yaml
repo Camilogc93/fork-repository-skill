@@ -1,0 +1,557 @@
+# Full Stack Web Application Template
+# Use: init project: fullstack-web
+
+name: Full Stack Web Application
+description: Modern web application with frontend SPA and backend API
+version: "1.0"
+
+# Template variables - prompted during initialization
+variables:
+  project_name:
+    prompt: "Project name"
+    type: string
+    default: "my-web-app"
+    validation: "^[a-z][a-z0-9-]*$"
+
+  frontend_framework:
+    prompt: "Frontend framework"
+    type: choice
+    options:
+      - label: "React"
+        value: react
+        recommended: true
+        description: "Component-based UI library with large ecosystem"
+      - label: "Vue"
+        value: vue
+        description: "Progressive framework with gentle learning curve"
+      - label: "Svelte"
+        value: svelte
+        description: "Compile-time framework with minimal runtime"
+      - label: "Angular"
+        value: angular
+        description: "Full-featured enterprise framework"
+    default: react
+
+  frontend_language:
+    prompt: "Frontend language"
+    type: choice
+    options:
+      - label: "TypeScript"
+        value: typescript
+        recommended: true
+      - label: "JavaScript"
+        value: javascript
+    default: typescript
+
+  backend_framework:
+    prompt: "Backend framework"
+    type: choice
+    options:
+      - label: "FastAPI (Python)"
+        value: fastapi
+        recommended: true
+        description: "Modern async Python API framework"
+      - label: "Express (Node.js)"
+        value: express
+        description: "Minimal Node.js web framework"
+      - label: "Django (Python)"
+        value: django
+        description: "Batteries-included Python framework"
+      - label: "NestJS (Node.js)"
+        value: nestjs
+        description: "Enterprise Node.js with TypeScript"
+      - label: "Go/Gin"
+        value: gin
+        description: "High-performance Go framework"
+    default: fastapi
+
+  database:
+    prompt: "Primary database"
+    type: choice
+    options:
+      - label: "PostgreSQL"
+        value: postgresql
+        recommended: true
+        description: "Robust relational database"
+      - label: "MySQL"
+        value: mysql
+        description: "Popular relational database"
+      - label: "MongoDB"
+        value: mongodb
+        description: "Document-oriented NoSQL"
+      - label: "SQLite"
+        value: sqlite
+        description: "File-based, good for development"
+    default: postgresql
+
+  authentication:
+    prompt: "Authentication method"
+    type: choice
+    options:
+      - label: "JWT Tokens"
+        value: jwt
+        recommended: true
+      - label: "Session-based"
+        value: session
+      - label: "OAuth2 / Social Login"
+        value: oauth2
+      - label: "None (add later)"
+        value: none
+    default: jwt
+
+  deployment:
+    prompt: "Deployment target"
+    type: choice
+    options:
+      - label: "Docker + Docker Compose"
+        value: docker
+        recommended: true
+      - label: "Kubernetes"
+        value: kubernetes
+      - label: "Serverless (AWS Lambda/Vercel)"
+        value: serverless
+      - label: "Traditional VPS"
+        value: vps
+    default: docker
+
+  cloud_provider:
+    prompt: "Cloud provider (optional)"
+    type: choice
+    options:
+      - label: "AWS"
+        value: aws
+      - label: "Google Cloud"
+        value: gcp
+      - label: "Azure"
+        value: azure
+      - label: "None / Self-hosted"
+        value: none
+    default: none
+
+# Project structure to suggest/create
+structure:
+  directories:
+    - path: "frontend/src/components"
+      description: "Reusable UI components"
+    - path: "frontend/src/pages"
+      description: "Page-level components/routes"
+    - path: "frontend/src/hooks"
+      description: "Custom React/Vue hooks"
+    - path: "frontend/src/services"
+      description: "API client and services"
+    - path: "frontend/src/types"
+      description: "TypeScript type definitions"
+    - path: "backend/src/api"
+      description: "API route handlers"
+    - path: "backend/src/services"
+      description: "Business logic"
+    - path: "backend/src/models"
+      description: "Database models"
+    - path: "backend/src/schemas"
+      description: "Request/response schemas"
+    - path: "shared/types"
+      description: "Shared type definitions"
+    - path: "tests/frontend"
+      description: "Frontend tests"
+    - path: "tests/backend"
+      description: "Backend tests"
+    - path: "tests/e2e"
+      description: "End-to-end tests"
+
+# Agent roles configuration
+agent_roles:
+  required:
+    - frontend
+    - backend
+    - qa
+
+  optional:
+    - devops
+    - architect
+
+  customizations:
+    frontend:
+      focus_areas:
+        - "{{ frontend_framework }} components and hooks"
+        - "State management and data fetching"
+        - "Responsive design and accessibility"
+        - "Form handling and validation"
+      tools:
+        - npm
+        - "{{ 'vite' if frontend_framework in ['react', 'vue', 'svelte'] else 'webpack' }}"
+        - vitest
+        - playwright
+
+    backend:
+      focus_areas:
+        - "REST API endpoints with {{ backend_framework }}"
+        - "Database operations with {{ database }}"
+        - "Authentication and authorization"
+        - "Input validation and error handling"
+      tools:
+        - "{{ 'pytest' if backend_framework in ['fastapi', 'django'] else 'jest' }}"
+        - "{{ 'alembic' if backend_framework == 'fastapi' else 'prisma' if backend_framework in ['express', 'nestjs'] else 'migrations' }}"
+
+    devops:
+      focus_areas:
+        - "Docker containerization"
+        - "CI/CD pipeline configuration"
+        - "Environment configuration"
+        - "{{ cloud_provider }} deployment" if cloud_provider != 'none' else "Local deployment"
+
+    qa:
+      focus_areas:
+        - "Unit tests for components and services"
+        - "Integration tests for API endpoints"
+        - "E2E tests for critical user flows"
+        - "Performance and accessibility testing"
+
+# Generated context file templates
+context_templates:
+  tech_stack: |
+    # Project Tech Stack
+
+    ## Frontend
+
+    ### Framework & Language
+    - **Framework**: {{ frontend_framework | title }} {{ versions[frontend_framework] }}
+    - **Language**: {{ frontend_language | title }} {{ versions[frontend_language] }}
+    - **Build Tool**: {{ 'Vite' if frontend_framework in ['react', 'vue', 'svelte'] else 'Webpack' }}
+
+    ### State Management
+    - **Library**: {{ state_management[frontend_framework] }}
+
+    ### Styling
+    - **Method**: Tailwind CSS (recommended) or CSS Modules
+
+    ### Testing
+    - **Unit Tests**: Vitest
+    - **Component Tests**: Testing Library
+    - **E2E Tests**: Playwright
+
+    ---
+
+    ## Backend
+
+    ### Framework & Language
+    - **Framework**: {{ backend_framework | title }}
+    - **Language**: {{ backend_language[backend_framework] }}
+
+    ### Database
+    - **Primary**: {{ database | title }}
+    - **ORM**: {{ orm[backend_framework] }}
+
+    ### Authentication
+    - **Method**: {{ authentication | upper }}
+
+    ### Testing
+    - **Framework**: {{ test_framework[backend_framework] }}
+
+    ---
+
+    ## Infrastructure
+
+    ### Containerization
+    - **Runtime**: Docker
+    - **Orchestration**: {{ deployment | title }}
+
+    ### CI/CD
+    - **Platform**: GitHub Actions
+
+    {% if cloud_provider != 'none' %}
+    ### Cloud ({{ cloud_provider | upper }})
+    - Configured for {{ cloud_provider | upper }} deployment
+    {% endif %}
+
+  architecture: |
+    # Project Architecture
+
+    ## Overview
+
+    {{ project_name }} is a full-stack web application with:
+    - **Frontend**: {{ frontend_framework | title }} SPA
+    - **Backend**: {{ backend_framework | title }} API
+    - **Database**: {{ database | title }}
+
+    ## Directory Structure
+
+    ```
+    {{ project_name }}/
+    ├── frontend/                 # {{ frontend_framework | title }} application
+    │   ├── src/
+    │   │   ├── components/       # Reusable UI components
+    │   │   ├── pages/            # Route pages
+    │   │   ├── hooks/            # Custom hooks
+    │   │   ├── services/         # API client
+    │   │   └── types/            # TypeScript types
+    │   ├── public/               # Static assets
+    │   └── tests/                # Frontend tests
+    │
+    ├── backend/                  # {{ backend_framework | title }} API
+    │   ├── src/
+    │   │   ├── api/              # Route handlers
+    │   │   ├── services/         # Business logic
+    │   │   ├── models/           # Database models
+    │   │   └── schemas/          # Validation schemas
+    │   └── tests/                # Backend tests
+    │
+    ├── shared/                   # Shared code
+    │   └── types/                # Shared TypeScript types
+    │
+    ├── docker-compose.yml        # Local development
+    └── .github/workflows/        # CI/CD
+    ```
+
+    ## Data Flow
+
+    ```
+    [Browser] → [{{ frontend_framework | title }} SPA] → [{{ backend_framework | title }} API] → [{{ database | title }}]
+    ```
+
+    ## Key Patterns
+
+    - **Frontend**: Component-based architecture with hooks
+    - **Backend**: Layered architecture (routes → services → repositories)
+    - **API**: RESTful with JSON responses
+    - **Auth**: {{ authentication | upper }} tokens
+
+  conventions: |
+    # Coding Conventions
+
+    ## General
+
+    - Use meaningful, descriptive names
+    - Keep functions small and focused
+    - Write self-documenting code
+    - Add comments only for complex logic
+
+    ## Frontend ({{ frontend_framework | title }})
+
+    ### Component Structure
+    ```{{ 'tsx' if frontend_language == 'typescript' else 'jsx' }}
+    // PascalCase for component names
+    export function UserProfile({ userId }: Props) {
+      // hooks at the top
+      const [user, setUser] = useState<User | null>(null);
+
+      // effects after hooks
+      useEffect(() => {
+        fetchUser(userId).then(setUser);
+      }, [userId]);
+
+      // render
+      return <div>...</div>;
+    }
+    ```
+
+    ### File Naming
+    - Components: `PascalCase.tsx`
+    - Hooks: `useCamelCase.ts`
+    - Utils: `camelCase.ts`
+    - Types: `types.ts` or `ComponentName.types.ts`
+
+    ## Backend ({{ backend_framework | title }})
+
+    ### API Structure
+    - Routes handle HTTP concerns
+    - Services contain business logic
+    - Models define data structures
+
+    ### Naming
+    - Files: `snake_case.py` (Python) or `kebab-case.ts` (Node)
+    - Classes: `PascalCase`
+    - Functions: `snake_case` (Python) or `camelCase` (Node)
+
+    ## Git
+
+    ### Commit Messages
+    ```
+    <type>(<scope>): <description>
+
+    Types: feat, fix, docs, style, refactor, test, chore
+    Example: feat(auth): add password reset flow
+    ```
+
+    ### Branch Naming
+    - `feature/<ticket>-<description>`
+    - `fix/<ticket>-<description>`
+    - `chore/<description>`
+
+  setup: |
+    # Development Setup
+
+    ## Prerequisites
+
+    - Node.js {{ versions.node }} or higher
+    {% if backend_framework in ['fastapi', 'django'] %}
+    - Python {{ versions.python }} or higher
+    {% endif %}
+    - Docker and Docker Compose
+    {% if database == 'postgresql' %}
+    - PostgreSQL (or use Docker)
+    {% endif %}
+
+    ## Quick Start
+
+    ### Option 1: Docker (Recommended)
+
+    ```bash
+    # Clone and enter project
+    git clone <repo-url>
+    cd {{ project_name }}
+
+    # Start all services
+    docker-compose up
+
+    # Access:
+    # - Frontend: http://localhost:3000
+    # - Backend: http://localhost:8000
+    # - Database: localhost:5432
+    ```
+
+    ### Option 2: Local Development
+
+    ```bash
+    # Frontend
+    cd frontend
+    npm install
+    npm run dev
+
+    # Backend (new terminal)
+    cd backend
+    {% if backend_framework in ['fastapi', 'django'] %}
+    python -m venv venv
+    source venv/bin/activate  # Windows: venv\Scripts\activate
+    pip install -r requirements.txt
+    {% if backend_framework == 'fastapi' %}
+    uvicorn main:app --reload
+    {% else %}
+    python manage.py runserver
+    {% endif %}
+    {% else %}
+    npm install
+    npm run dev
+    {% endif %}
+    ```
+
+    ## Environment Variables
+
+    Copy `.env.example` to `.env` and configure:
+
+    ```bash
+    # Frontend
+    VITE_API_URL=http://localhost:8000
+
+    # Backend
+    DATABASE_URL={{ database }}://user:pass@localhost:5432/{{ project_name }}
+    {% if authentication == 'jwt' %}
+    JWT_SECRET=your-secret-key-here
+    {% endif %}
+    ```
+
+    ## Common Commands
+
+    | Command | Description |
+    |---------|-------------|
+    | `npm run dev` | Start frontend dev server |
+    | `npm run test` | Run frontend tests |
+    | `npm run build` | Build frontend for production |
+    {% if backend_framework in ['fastapi', 'django'] %}
+    | `pytest` | Run backend tests |
+    | `alembic upgrade head` | Run database migrations |
+    {% else %}
+    | `npm run test` | Run backend tests |
+    | `npx prisma migrate dev` | Run database migrations |
+    {% endif %}
+
+  apis: |
+    # API Documentation
+
+    ## Base URL
+
+    - Development: `http://localhost:8000`
+    - Staging: `https://api.staging.{{ project_name }}.com`
+    - Production: `https://api.{{ project_name }}.com`
+
+    ## Authentication
+
+    {% if authentication == 'jwt' %}
+    ### JWT Authentication
+
+    Include token in Authorization header:
+    ```
+    Authorization: Bearer <token>
+    ```
+
+    ### Endpoints
+
+    | Method | Endpoint | Description |
+    |--------|----------|-------------|
+    | POST | `/auth/login` | Login, returns JWT |
+    | POST | `/auth/register` | Create new account |
+    | POST | `/auth/refresh` | Refresh access token |
+    | POST | `/auth/logout` | Invalidate token |
+    {% endif %}
+
+    ## API Patterns
+
+    ### Request Format
+    ```json
+    {
+      "data": { ... }
+    }
+    ```
+
+    ### Response Format
+    ```json
+    {
+      "data": { ... },
+      "meta": {
+        "timestamp": "2024-01-01T00:00:00Z"
+      }
+    }
+    ```
+
+    ### Error Format
+    ```json
+    {
+      "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Invalid input",
+        "details": [...]
+      }
+    }
+    ```
+
+    ## Core Endpoints
+
+    Document your API endpoints here as you build them:
+
+    | Method | Endpoint | Description | Auth |
+    |--------|----------|-------------|------|
+    | GET | `/health` | Health check | No |
+    | GET | `/users/me` | Current user | Yes |
+    | ... | ... | ... | ... |
+
+# Orchestration configuration
+orchestration:
+  max_concurrent_agents: 5
+  auto_recovery: true
+  checkpoint_interval: 30
+
+  typical_workflows:
+    - name: "Add Feature"
+      agents: [architect, backend, frontend, qa]
+      description: "Full feature implementation"
+
+    - name: "Bug Fix"
+      agents: [backend, frontend, qa]
+      description: "Fix and test bug"
+
+    - name: "API Addition"
+      agents: [backend, qa]
+      description: "Add new API endpoint"
+
+    - name: "UI Component"
+      agents: [frontend, qa]
+      description: "Create new UI component"
